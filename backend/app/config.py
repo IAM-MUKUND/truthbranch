@@ -6,7 +6,9 @@ class Settings(BaseSettings):
     falkordb_host: str = "localhost"
     falkordb_port: int = 6380
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_heavy_model: str = "openai/gpt-oss-120b"  # For deep reasoning, tool calling, and lineage analysis
+    groq_light_model: str = "openai/gpt-oss-20b"    # For fast text formatting, summaries, and light tasks
     agent_mode: str = "scripted"
 
     model_config = SettingsConfigDict(

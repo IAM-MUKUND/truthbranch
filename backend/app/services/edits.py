@@ -64,6 +64,13 @@ def propose_edits_for_cr(cr_id: str) -> dict[str, Any]:
     # Clean existing proposed edits on branch to be idempotent
     branch.query("MATCH (e:ProposedEdit) DETACH DELETE e")
 
+    # Dynamically look up old fact value
+    val_res = main.ro_query("MATCH (f:Fact {id:$id}) RETURN f.value", params={"id": old_fact_id}).result_set
+    old_val = val_res[0][0] if (val_res and val_res[0] and val_res[0][0] is not None) else 49
+    if isinstance(old_val, str) and old_val.isdigit():
+        old_val = int(old_val)
+    new_val_num = int(cr.new_value) if str(cr.new_value).isdigit() else cr.new_value
+
     for item in impacted:
         doc_id = item["doc_id"]
         # Fetch current content from branch
@@ -77,11 +84,18 @@ def propose_edits_for_cr(cr_id: str) -> dict[str, Any]:
         content, title = doc_res.result_set[0]
         content = content or ""
 
-        # Check if content has literal $49 or $490
-        has_literal = bool(literal_pattern(49).search(content) or literal_pattern(490).search(content))
+        # Check if content has literal old value or derived annual value (x10)
+        has_literal = False
+        if isinstance(old_val, (int, float)):
+            has_literal = bool(literal_pattern(old_val).search(content) or literal_pattern(int(old_val * 10)).search(content))
+        elif isinstance(old_val, str):
+            has_literal = bool(re.search(re.escape(old_val), content))
 
         if has_literal:
-            new_content = draft_content_replace(content, old_monthly=49, new_monthly=int(cr.new_value))
+            if isinstance(old_val, (int, float)) and isinstance(new_val_num, (int, float)):
+                new_content = draft_content_replace(content, old_monthly=int(old_val), new_monthly=int(new_val_num))
+            else:
+                new_content = content.replace(str(old_val), str(new_val_num))
             edit_id = f"edit_{uuid.uuid4().hex[:8]}"
 
             branch.query(

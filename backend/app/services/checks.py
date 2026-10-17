@@ -242,6 +242,12 @@ def analyze_change_request(cr_id: str) -> dict[str, Any]:
     if not old_fact_id:
         old_fact_id = fact_id(cr.fact_key, 1)
 
+    # Dynamically retrieve old fact value from kb_main
+    val_res = main.ro_query("MATCH (f:Fact {id:$id}) RETURN f.value", params={"id": old_fact_id}).result_set
+    old_fact_val = val_res[0][0] if (val_res and val_res[0] and val_res[0][0] is not None) else 49
+    if isinstance(old_fact_val, str) and old_fact_val.isdigit():
+        old_fact_val = int(old_fact_val)
+
     # 2. Compute impact set (from kb_main or branch)
     impact_items = impact_for_fact(main, old_fact_id)
     impact_doc_ids = [i["doc_id"] for i in impact_items]
@@ -249,14 +255,14 @@ def analyze_change_request(cr_id: str) -> dict[str, Any]:
     # 3. Compute baseline comparison
     all_docs_res = main.ro_query("MATCH (d:Document) RETURN d.id, d.title, d.content").result_set
     documents_list = [{"id": r[0], "title": r[1], "content": r[2]} for r in all_docs_res]
-    baseline_card = compute_baseline_comparison(documents_list, impact_doc_ids, value=49)
+    baseline_card = compute_baseline_comparison(documents_list, impact_doc_ids, value=old_fact_val)
 
     # 4. Run quality checks on the branch
     check_results = run_quality_checks(
         branch_graph=branch,
         impact_docs=impact_items,
         fact_key=cr.fact_key,
-        old_val=49,
+        old_val=old_fact_val,
     )
 
     # 5. Evaluate pass/block status
@@ -267,8 +273,9 @@ def analyze_change_request(cr_id: str) -> dict[str, Any]:
 
     # 6. Update CR status
     if cr.status in (CRStatus.DRAFT, CRStatus.BLOCKED, CRStatus.CHECKS_PASSED, CRStatus.READY_FOR_REVIEW):
-        transition(cr, new_status)
-        save_change_request(cr)
+        if cr.status != new_status:
+            transition(cr, new_status)
+            save_change_request(cr)
 
     # 7. Record audit event
     record_audit_event(

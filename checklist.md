@@ -869,29 +869,29 @@ Time boxes are ceilings. When one runs out, take the fallback and move on.
 
 **Block 3.1 Tool layer (75 min)**
 
-- [ ] Wrap services as tools with JSON schemas and Pydantic args; compact results
-- [ ] Enforce hard limits (11.2); test tools directly
+- [x] Wrap services as tools with JSON schemas and Pydantic args; compact results
+- [x] Enforce hard limits (11.2); test tools directly
 
 **Block 3.2 Groq loop (90 min)**
 
-- [ ] Model ID in `.env`; `loop.py` (8 steps, truncation, backoff); system prompt (11.4); log `AgentStep`s
-- [ ] Run A; tune **tool descriptions** (they matter more than the prompt)
-- [ ] Run B; confirm refusal and `request_verification`
-- [ ] `AGENT_MODE=scripted`
+- [x] Model ID in `.env`; `loop.py` (8 steps, truncation, backoff); system prompt (11.4); log `AgentStep`s
+- [x] Run A; tune **tool descriptions** (they matter more than the prompt)
+- [x] Run B; confirm refusal and `request_verification`
+- [x] `AGENT_MODE=scripted`
 
 **Block 3.3 Agent endpoint (30 min)**
 
-- [ ] `agent-review` returns report + steps (poll or single response)
-- [ ] Post-check: cited IDs exist in tool output
+- [x] `agent-review` returns report + steps (poll or single response)
+- [x] Post-check: cited IDs exist in tool output
 
 **Block 3.4 Frontend (150 min)**
 
-- [ ] Vite + React, `api.ts`, routes
-- [ ] Section 13 in priority order; wire buttons by state; reset button
+- [x] Vite + React, `api.ts`, routes
+- [x] Section 13 in priority order; wire buttons by state; reset button
 
 **Block 3.5 Browser end-to-end (45 min)**
 
-- [ ] Scenario A and B fully in the browser; fix the first five annoying bugs only
+- [x] Scenario A and B fully in the browser; fix the first five annoying bugs only
 
 **Block 3.6 Stretch (only if solid):** diff polish, graph-path view, MCP, `graph_explore`, `--scale`.
 

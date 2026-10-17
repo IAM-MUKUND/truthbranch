@@ -135,6 +135,18 @@ def get_cr_baseline(cr_id: str):
     return compute_baseline_comparison(documents_list, impact_doc_ids, value=49)
 
 
+@router.post("/{cr_id}/agent-review")
+def agent_review(cr_id: str):
+    """Run autonomous agent review loop (Groq or scripted fallback)."""
+    from backend.app.agent.loop import run_groq_agent_review
+    try:
+        return run_groq_agent_review(cr_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent review failed: {str(e)}")
+
+
 @router.post("/{cr_id}/propose-edits")
 def propose_edits(cr_id: str):
     """Deterministically draft edits for all impacted documents."""

@@ -1,22 +1,22 @@
-# Next Steps: Sprint 3 (Agent First, Interface Second)
+# Next Steps: Sprint 4 (Reliability, Documentation & Submission)
 
-Sprint 1 (Foundation & Ground Truth) and Sprint 2 (Change Engine, Diff, Checks, Lifecycle, Merge) are 100% complete with 70/70 passing tests.
+Sprint 1 (Foundation & Ground Truth), Sprint 2 (Change Engine, Diff, Checks, Lifecycle, Merge), and Sprint 3 (Autonomous Agent Loop, Tool Layer & Interactive Frontend) are **100% complete with 77/77 passing tests**.
 
-### Immediate Next Tasks (Sprint 3 Start):
-1. **Block 3.1: Tool Layer for Agent (75 min)**
-   - Expose backend services as standardized agent tools with JSON schemas and Pydantic argument validators in `backend/app/agent/tools.py`:
-     - `get_lineage(fact_id)`
-     - `get_impact(cr_id)`
-     - `run_checks(cr_id)`
-     - `propose_edits_for_affected_docs(cr_id)`
-     - `request_verification(cr_id, reason, person_id)`
-     - `submit_for_approval(cr_id)`
-   - Hard limits: enforce that the agent has NO merge tool and NO approve tool.
-2. **Block 3.2: Groq Agent Loop (90 min)**
-   - Implement `backend/app/agent/loop.py` using Groq tool calling (`llama-3.3-70b-versatile`, `temperature=0`, step cap=8).
-   - Implement system prompt and prompt templates in `backend/app/agent/prompts.py`.
-   - Implement fallback `AGENT_MODE=scripted` in `backend/app/agent/scripted.py`.
-3. **Block 3.3: Agent Review Endpoint (30 min)**
-   - Expose `POST /api/change-requests/{id}/agent-review` returning the agent timeline and decision report.
-4. **Block 3.4 & 3.5: React Frontend (150 min)**
-   - Initialize Vite + React review interface with change card, impact table, baseline card, checks panel, agent timeline, diff viewer, and approval action bar.
+### Status Overview
+- **Backend API**: Running on port `8000` with 11 endpoints.
+- **FalkorDB**: Running on port `6380`.
+- **Groq LLM**: `openai/gpt-oss-120b` (heavy reasoning/tools) + `openai/gpt-oss-20b` (light reports).
+- **Frontend SPA**: React 18 + Vite 5 + TypeScript in `frontend/`, builds cleanly with 0 errors.
+- **Custom Datasets**: Dynamic fact lookup and dynamic citation repointing enabled.
+
+### Upcoming Sprint 4 Tasks:
+1. **Block 4.1: Failure-Case & Invariant Tests**
+   - Assert `kb_main` snapshot is byte-for-byte identical before approval.
+   - Test duplicate ops and idempotent re-merge.
+   - Test merge conflict when `base_revision` moves.
+2. **Block 4.2: Clean-Room Environment Verification**
+   - Run verification script to confirm zero undocumented dependencies.
+3. **Block 4.3: Documentation & Architecture Diagrams**
+   - Finalize `README.md`, `docs/architecture.md`, `docs/graph-schema.md`, `docs/cypher-queries.md`.
+4. **Block 4.4 & 4.5: Submission Preparation**
+   - Demo video script and walkthrough guide.
