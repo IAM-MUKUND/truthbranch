@@ -71,10 +71,12 @@ def get_cr_detail(cr_id: str):
         raise HTTPException(status_code=404, detail=f"Change Request '{cr_id}' not found.")
 
     client = get_falkordb()
-    main = client.select_graph("kb_main")
+    main = get_graph("kb_main")
     
     # 1. Old fact id
     old_fact_id = fact_id(cr.fact_key, 1)
+    f_res = main.ro_query("MATCH (f:Fact {id: $id}) RETURN f.value", params={"id": old_fact_id}).result_set
+    fact_val = f_res[0][0] if f_res else 49
 
     # 2. Impact set
     impact_items = impact_for_fact(main, old_fact_id)
@@ -86,13 +88,13 @@ def get_cr_detail(cr_id: str):
     if cr.branch_graph in client.list_graphs():
         branch = client.select_graph(cr.branch_graph)
         diff = compute_branch_diff(main, branch)
-        raw_checks = run_quality_checks(branch, impact_items, cr.fact_key, old_val=49)
+        raw_checks = run_quality_checks(branch, impact_items, cr.fact_key, old_val=fact_val)
         checks = [c.model_dump() for c in raw_checks]
 
     # 4. Baseline
     all_docs = main.ro_query("MATCH (d:Document) RETURN d.id, d.title, d.content").result_set
     documents_list = [{"id": r[0], "title": r[1], "content": r[2]} for r in all_docs]
-    baseline = compute_baseline_comparison(documents_list, impact_doc_ids, value=49)
+    baseline = compute_baseline_comparison(documents_list, impact_doc_ids, value=fact_val)
 
     # 5. Audit & Steps
     audit_events = get_audit_events(cr_id)

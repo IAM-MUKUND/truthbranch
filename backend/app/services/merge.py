@@ -107,13 +107,15 @@ def merge_change_request(cr_id: str) -> dict[str, Any]:
         )
 
     client = get_falkordb()
-    main = client.select_graph("kb_main")
+    main = get_graph("kb_main")
     branch = client.select_graph(cr.branch_graph)
 
     # 1. Re-verify checks on the branch before writing to main
     old_fact_id = fact_id(cr.fact_key, 1)
     impacted = impact_for_fact(main, old_fact_id)
-    pre_checks = run_quality_checks(branch, impacted, cr.fact_key, old_val=49)
+    f_res = main.ro_query("MATCH (f:Fact {id: $id}) RETURN f.value", params={"id": old_fact_id}).result_set
+    fact_val = f_res[0][0] if f_res else 49
+    pre_checks = run_quality_checks(branch, impacted, cr.fact_key, old_val=fact_val)
     if any(not c.passed and c.severity == CheckSeverity.BLOCK for c in pre_checks):
         raise ValueError("Cannot merge: one or more blocking quality checks failed on branch.")
 

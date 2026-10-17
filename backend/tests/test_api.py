@@ -96,3 +96,26 @@ def test_full_api_change_request_flow(client):
     assert merge_res.status_code == 200
     assert merge_res.json()["status"] == "MERGED"
     assert merge_res.json()["revision"] == 2
+
+
+def test_entities_endpoint(client):
+    res = client.get("/api/entities")
+    assert res.status_code == 200
+    data = res.json()
+    assert "people" in data
+    assert "facts" in data
+    assert "sources" in data
+    assert len(data["people"]) >= 5
+    assert len(data["facts"]) >= 2
+
+
+def test_chat_endpoint(client):
+    res = client.post(
+        "/api/chat",
+        json={"messages": [{"role": "user", "content": "What is the Pro plan monthly cost?"}]},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["role"] == "assistant"
+    assert "$49" in data["content"] or "49" in data["content"]
+    assert len(data["citations"]) >= 1

@@ -114,3 +114,65 @@ export interface ChangeRequestDetail {
   steps: AgentStep[];
   audit: AuditEvent[];
 }
+
+export interface PersonEntity {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+}
+
+export interface FactEntity {
+  id: string;
+  key: string;
+  value: any;
+  unit: string;
+  subject: string;
+  attribute: string;
+  version: number;
+}
+
+export interface SourceEntity {
+  id: string;
+  title: string;
+  trust: number;
+  valid: boolean;
+  kind: string;
+}
+
+export interface DocSummary {
+  id: string;
+  title: string;
+  status: string;
+}
+
+export interface EntityData {
+  people: PersonEntity[];
+  facts: FactEntity[];
+  sources: SourceEntity[];
+  documents: DocSummary[];
+}
+
+export interface ChatMessageItem {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  citations?: string[];
+  timestamp: string;
+}
+
+export interface CatalogEntry {
+  id: string;
+  name: string;
+  domain: string;
+  description: string;
+  default_graph: string;
+  is_active: boolean;
+  is_seeded: boolean;
+}
+
+export interface DatasetCatalogResponse {
+  active_dataset: string;
+  catalog: CatalogEntry[];
+}
+

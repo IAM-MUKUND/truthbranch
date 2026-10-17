@@ -252,3 +252,30 @@ def reset_meta() -> None:
         client.select_graph(META_GRAPH_NAME).delete()
     except Exception:
         pass
+
+
+def set_meta_active_dataset(dataset_id: str, graph_name: str) -> None:
+    """Store the currently active company dataset and graph pointer in kb_meta."""
+    g = get_meta_graph()
+    g.query(
+        """
+        MERGE (s:SystemSetting {key: 'active_dataset'})
+        SET s.dataset_id = $dataset_id, s.graph_name = $graph_name
+        """,
+        params={"dataset_id": dataset_id, "graph_name": graph_name},
+    )
+
+
+def get_meta_active_dataset() -> tuple[str, str]:
+    """Return (dataset_id, graph_name) currently active. Defaults to ('lumen', 'kb_main')."""
+    try:
+        g = get_meta_graph()
+        res = g.query("MATCH (s:SystemSetting {key: 'active_dataset'}) RETURN s.dataset_id, s.graph_name")
+        if res.result_set:
+            d_id = res.result_set[0][0] or "lumen"
+            g_name = res.result_set[0][1] or "kb_main"
+            return str(d_id), str(g_name)
+    except Exception:
+        pass
+    return "lumen", "kb_main"
+

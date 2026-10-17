@@ -1,6 +1,7 @@
 import type {
   ChangeRequest,
   ChangeRequestDetail,
+  EntityData,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? '';
@@ -123,3 +124,59 @@ export async function resetDemo(withContradiction = false): Promise<any> {
   });
   return res.json();
 }
+
+export async function fetchEntities(): Promise<EntityData> {
+  const res = await fetch(`${API_BASE}/api/entities`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch entities');
+  }
+  return res.json();
+}
+
+export async function sendChatMessage(messages: { role: string; content: string }[]): Promise<{ role: string; content: string; citations: string[] }> {
+  const res = await fetch(`${API_BASE}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Chat request failed');
+  }
+  return res.json();
+}
+
+export async function fetchDatasetCatalog(): Promise<{ active_dataset: string; catalog: any[] }> {
+  const res = await fetch(`${API_BASE}/api/admin/datasets/catalog`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch dataset catalog');
+  }
+  return res.json();
+}
+
+export async function activateDataset(datasetId: string, forceReseed = false): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/admin/datasets/activate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dataset_id: datasetId, force_reseed: forceReseed }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to activate dataset');
+  }
+  return res.json();
+}
+
+export async function ingestCustomDataset(payload: any): Promise<any> {
+  const res = await fetch(`${API_BASE}/api/admin/datasets/ingest?activate=true`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to ingest custom dataset');
+  }
+  return res.json();
+}
+

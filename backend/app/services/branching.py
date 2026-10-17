@@ -19,7 +19,11 @@ def get_base_revision(graph: Graph | None = None) -> int:
 
 
 def create_branch(cr_id: str, base_graph_name: str = "kb_main") -> Graph:
-    """Clone kb_main into a new isolated branch graph for the Change Request."""
+    """Clone active graph into a new isolated branch graph for the Change Request."""
+    from backend.app.db import get_active_graph_name
+    if base_graph_name == "kb_main":
+        base_graph_name = get_active_graph_name()
+
     client = get_falkordb()
     target_name = branch_graph_name(cr_id)
     

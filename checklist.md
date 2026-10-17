@@ -64,16 +64,16 @@ How to use this file: tick boxes as you go (`- [x]`). Every task has a short **W
 
 ### 2.2 Must ship (MVP)
 
-- [ ] Synthetic company graph in FalkorDB (facts, documents, sources, people, systems)
-- [ ] Candidate branch created from `main`
-- [ ] Deterministic, versioned change operations
-- [ ] Graph-derived impact analysis with a "why was this flagged" path for every item
-- [ ] Keyword-vs-graph baseline comparison (cheap, very persuasive)
-- [ ] Quality checks (source missing/invalid, stale dependency, contradiction)
-- [ ] An agent that chooses and calls graph tools (Track 1 proof)
-- [ ] Human approval gate
-- [ ] Controlled merge preserving history (`SUPERSEDES`, audit trail)
-- [ ] React review screen
+- [x] Synthetic company graph in FalkorDB (facts, documents, sources, people, systems)
+- [x] Candidate branch created from `main`
+- [x] Deterministic, versioned change operations
+- [x] Graph-derived impact analysis with a "why was this flagged" path for every item
+- [x] Keyword-vs-graph baseline comparison (cheap, very persuasive)
+- [x] Quality checks (source missing/invalid, stale dependency, contradiction)
+- [x] An agent that chooses and calls graph tools (Track 1 proof)
+- [x] Human approval gate
+- [x] Controlled merge preserving history (`SUPERSEDES`, audit trail)
+- [x] React review screen
 - [ ] README, schema doc, Cypher doc, demo video, public repo
 
 ### 2.3 Out of scope
@@ -895,7 +895,21 @@ Time boxes are ceilings. When one runs out, take the fallback and move on.
 
 **Block 3.6 Stretch (only if solid):** diff polish, graph-path view, MCP, `graph_explore`, `--scale`.
 
-**Done when:** full browser flow with visible tool calls, paths, drafted edits, human approval, merge.
+- [x] Rich visual diff and graph-path inspect drawer
+- [x] Dark dependency detection (`LITERAL_VALUE_LEAK`)
+
+**Block 3.7 Additions to Sprint 3: Dual-Portal Architecture & Multi-Company Knowledge OS**
+
+- [x] **Dynamic Entity Discovery API (`GET /api/entities`)**: Queries active graph for facts, people, and sources to populate smart modal dropdowns.
+- [x] **Public Customer AI Assistant (`POST /api/chat` & `/`)**: Grounded AI Knowledge Ambassador with real-time citations and proof of live ground-truth propagation.
+- [x] **Dual-Portal Client Navigation**: Customer support bot at `http://localhost:5173/`, governance console at `http://localhost:5173/admin`.
+- [x] **Modular Multi-Company Catalog (`backend/app/seed/datasets/`)**: Lumen Analytics (B2B SaaS) + CloudGrid Infrastructure (Enterprise AI GPU Cluster).
+- [x] **Zero-Duplication Ingestion Engine (`seed.py`)**: `ensure_dataset_graph()` checks `client.list_graphs()` to activate in 2ms with zero duplicate creation.
+- [x] **Custom Dataset Ingestion API (`POST /api/admin/datasets/ingest`)**: Pydantic schema validation with strict referential integrity (422 on dangling edges).
+- [x] **Admin Dataset Switcher & UI Adaptation**: Top navbar switcher dynamically re-binds active brain, scenario buttons, and customer bot.
+- [x] **Expanded Test Suite**: Added `test_dataset_catalog.py` bringing full test coverage to **83/83 passing tests**.
+
+**Done when:** full browser flow with visible tool calls, paths, drafted edits, human approval, merge, dual portal, and multi-company catalog.
 **If behind:** plain HTML tables; cut all stretch; if the agent is flaky by mid-afternoon, tighten tool descriptions, lower the step cap, make sure scripted mode works.
 
 ### Sprint 4: Sun 18 Oct: reliability and submission only
