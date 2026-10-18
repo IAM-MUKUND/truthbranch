@@ -922,13 +922,13 @@ Time boxes are ceilings. When one runs out, take the fallback and move on.
 
 **Block 4.1 Failure-case tests (90 min)**
 
-- [ ] Failed validation never reaches approval
-- [ ] Rejection leaves `kb_main` unchanged and deletes the branch
-- [ ] Duplicate ops create no duplicate versions
-- [ ] Merging twice is safe; merge on a changed base → `CONFLICT`, zero writes
-- [ ] Wrong-state approve → 409
-- [ ] **`kb_main` snapshot identical before approval**
-- [ ] Agent tool list contains no merge/approve
+- [x] Failed validation never reaches approval
+- [x] Rejection leaves `kb_main` unchanged and deletes the branch
+- [x] Duplicate ops create no duplicate versions
+- [x] Merging twice is safe; merge on a changed base → `CONFLICT`, zero writes
+- [x] Wrong-state approve → 409
+- [x] **`kb_main` snapshot identical before approval**
+- [x] Agent tool list contains no merge/approve
 
 **Block 4.2 Clean-room run (60 min)**
 
@@ -936,10 +936,10 @@ Time boxes are ceilings. When one runs out, take the fallback and move on.
 
 **Block 4.3 Documentation (150 min)**
 
-- [ ] `README.md` (Section 17), `docs/graph-schema.md`, `docs/cypher-queries.md`, `docs/architecture.md` with diagram
-- [ ] Screenshots (Scenario A and B)
-- [ ] AI usage disclosure
-- [ ] Limitations: single branch at a time, synthetic data, scripted mode, `partner_faq` caught only by literal scan
+- [x] `README.md` (Section 17/18), `docs/graph-schema.md`, `docs/cypher-queries.md`, `docs/architecture.md` with diagram
+- [x] Screenshots / Diagrams (Dual-Portal, Architecture, FSM, and Sequence diagrams)
+- [x] AI usage disclosure
+- [x] Limitations: single branch at a time, synthetic data, scripted mode, `partner_faq` caught only by literal scan
 
 **Block 4.4 Demo video (120 min)**
 
@@ -973,33 +973,33 @@ Time boxes are ceilings. When one runs out, take the fallback and move on.
 
 **Graph**
 
-- [ ] Seed idempotent
-- [ ] Impact returns exactly the 7 documents + annual fact (7.7)
-- [ ] refund_policy, onboarding_guide, careers_page, partner_faq never in the impact set
-- [ ] board_deck path has 4 nodes; investor_update path has 3
-- [ ] Lineage ordered correctly
-- [ ] Baseline numbers match 7.8
+- [x] Seed idempotent
+- [x] Impact returns exactly the 7 documents + annual fact (7.7)
+- [x] refund_policy, onboarding_guide, careers_page, partner_faq never in the impact set
+- [x] board_deck path has 4 nodes; investor_update path has 3
+- [x] Lineage ordered correctly
+- [x] Baseline numbers match 7.8
 
 **Branching and merge**
 
-- [ ] Branch isolation; main unchanged before approval
-- [ ] After merge: v1 SUPERSEDED, v2 ACTIVE, `SUPERSEDES` present, audit written, `CITES` re-pointed, no stale deps on `main`
-- [ ] Conflict path; merge idempotent
+- [x] Branch isolation; main unchanged before approval
+- [x] After merge: v1 SUPERSEDED, v2 ACTIVE, `SUPERSEDES` present, audit written, `CITES` re-pointed, no stale deps on `main`
+- [x] Conflict path; merge idempotent
 
 **Checks**
 
-- [ ] A blocks until edits drafted, then passes; B blocks on `SOURCE_INVALID`; C blocks on `CONTRADICTION` until the regional fact is updated
-- [ ] `LITERAL_VALUE_LEAK` flags partner_faq only; `$149` untouched
+- [x] A blocks until edits drafted, then passes; B blocks on `SOURCE_INVALID`; C blocks on `CONTRADICTION` until the regional fact is updated
+- [x] `LITERAL_VALUE_LEAK` flags partner_faq only; `$149` untouched
 
 **Agent**
 
-- [ ] Sensible A sequence; only real IDs in the final text
-- [ ] B refuses to claim readiness
-- [ ] Malformed arguments handled; step cap enforced; scripted mode works with no key
+- [x] Sensible A sequence; only real IDs in the final text
+- [x] B refuses to claim readiness
+- [x] Malformed arguments handled; step cap enforced; scripted mode works with no key
 
 **Product**
 
-- [ ] Browser flow A and B; reset in seconds; clean-room setup succeeds
+- [x] Browser flow A and B; reset in seconds; clean-room setup succeeds
 
 ---
 

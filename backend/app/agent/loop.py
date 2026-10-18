@@ -13,6 +13,7 @@ from typing import Any
 
 from groq import Groq
 
+from backend.app.agent.groq_pool import groq_pool
 from backend.app.agent.prompts import SYSTEM_PROMPT, user_prompt_for_cr
 from backend.app.agent.scripted import run_scripted_agent
 from backend.app.agent.tools import TOOL_DEFINITIONS, execute_tool
@@ -33,8 +34,8 @@ def run_groq_agent_review(cr_id: str) -> dict[str, Any]:
     """Execute the autonomous LLM agent review loop for a Change Request."""
     settings = get_settings()
 
-    # If scripted mode is enabled, run the deterministic engine directly
-    if settings.agent_mode == "scripted" or not settings.groq_api_key:
+    # If scripted mode is enabled or no keys in pool, run the deterministic engine directly
+    if settings.agent_mode == "scripted" or not groq_pool.has_keys:
         return run_scripted_agent(cr_id)
 
     cr = get_change_request(cr_id)
@@ -42,8 +43,6 @@ def run_groq_agent_review(cr_id: str) -> dict[str, Any]:
         raise ValueError(f"Change Request '{cr_id}' not found.")
 
     try:
-        client = Groq(api_key=settings.groq_api_key)
-
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt_for_cr(cr.model_dump())},
@@ -54,7 +53,7 @@ def run_groq_agent_review(cr_id: str) -> dict[str, Any]:
         final_report = ""
 
         for step in range(MAX_STEPS):
-            resp = client.chat.completions.create(
+            resp = groq_pool.chat_completion(
                 model=settings.groq_heavy_model,
                 messages=messages,
                 tools=TOOL_DEFINITIONS,
@@ -120,7 +119,7 @@ def run_groq_agent_review(cr_id: str) -> dict[str, Any]:
 
         # If no report was generated after tool calls, ask for final evaluation
         if not final_report:
-            resp_summary = client.chat.completions.create(
+            resp_summary = groq_pool.chat_completion(
                 model=settings.groq_light_model or settings.groq_heavy_model,
                 messages=messages + [
                     {

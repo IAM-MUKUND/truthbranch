@@ -131,7 +131,7 @@ class ChangeRequest(BaseModel):
 
 # --------------------------------------------------------------------------- State Machine
 LEGAL_TRANSITIONS: dict[CRStatus, set[CRStatus]] = {
-    CRStatus.DRAFT: {CRStatus.BLOCKED, CRStatus.CHECKS_PASSED},
+    CRStatus.DRAFT: {CRStatus.BLOCKED, CRStatus.CHECKS_PASSED, CRStatus.REJECTED},
     CRStatus.BLOCKED: {CRStatus.BLOCKED, CRStatus.CHECKS_PASSED, CRStatus.REJECTED},
     CRStatus.CHECKS_PASSED: {CRStatus.BLOCKED, CRStatus.READY_FOR_REVIEW, CRStatus.REJECTED},
     CRStatus.READY_FOR_REVIEW: {CRStatus.APPROVED, CRStatus.REJECTED, CRStatus.BLOCKED},
