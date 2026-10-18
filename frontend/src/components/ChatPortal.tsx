@@ -108,7 +108,16 @@ export default function ChatPortal({ onSwitchToAdmin, backendConnected }: ChatPo
     <div className="chat-portal-container">
       {/* Top Header */}
       <header className="chat-navbar">
-        <div className="brand">
+        <a
+          href="/"
+          className="brand brand-clickable"
+          onClick={(e) => {
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+              e.preventDefault();
+            }
+          }}
+          title="Customer Portal (Home /)"
+        >
           <div className="brand-icon">TB</div>
           <div>
             <div className="brand-title">{companyName} AI Assistant</div>
@@ -119,12 +128,54 @@ export default function ChatPortal({ onSwitchToAdmin, backendConnected }: ChatPo
           <span className="status-pill status-CHECKS_PASSED" style={{ fontSize: '10px' }}>
             {backendConnected ? 'Database: Active' : 'Connecting...'}
           </span>
+        </a>
+
+        {/* Route Navigation Segmented Control */}
+        <div className="route-nav-group">
+          <a
+            href="/"
+            className="route-nav-tab active"
+            onClick={(e) => e.preventDefault()}
+            title="Current Page: Customer Portal (/)"
+          >
+            <span className="route-nav-icon">💬</span>
+            <span className="route-nav-text">Customer Portal</span>
+            <span className="route-nav-badge">/</span>
+          </a>
+          <a
+            href="/admin"
+            className="route-nav-tab"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                onSwitchToAdmin();
+              }
+            }}
+            title="Navigate to Admin Console (/admin)"
+          >
+            <span className="route-nav-icon">🛡️</span>
+            <span className="route-nav-text">Admin Console</span>
+            <span className="route-nav-badge">/admin</span>
+          </a>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="btn btn-primary" onClick={onSwitchToAdmin}>
-            TruthBranch Admin Console &rarr;
-          </button>
+          <a
+            href="/admin"
+            className="btn btn-primary"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                onSwitchToAdmin();
+              }
+            }}
+            title="Open TruthBranch Governance Admin Console (/admin)"
+          >
+            <span>TruthBranch Admin Console &rarr;</span>
+            <span className="route-nav-badge" style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#ffffff' }}>
+              /admin
+            </span>
+          </a>
         </div>
       </header>
 
@@ -285,14 +336,21 @@ export default function ChatPortal({ onSwitchToAdmin, backendConnected }: ChatPo
             </button>
           </div>
           <div className="chat-footer-note">
-            ⚡ <b>Live Truth Branching:</b> When you propose and merge a price change in the{' '}
-            <span
-              style={{ color: '#818cf8', cursor: 'pointer', textDecoration: 'underline' }}
-              onClick={onSwitchToAdmin}
+            ⚡ <b>Live Truth Branching:</b> When you propose and merge a price or policy change in the{' '}
+            <a
+              href="/admin"
+              style={{ color: '#818cf8', fontWeight: 600, textDecoration: 'underline' }}
+              onClick={(e) => {
+                if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                  e.preventDefault();
+                  onSwitchToAdmin();
+                }
+              }}
+              title="Navigate to Admin Console (/admin)"
             >
-              Admin Console
-            </span>
-            , ask the price again to watch live truth propagation in real time!
+              Admin Console (/admin)
+            </a>
+            , ask again to watch live truth propagation in real time!
           </div>
         </div>
       </div>

@@ -416,7 +416,17 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
     <div className="app-container">
       {/* Top Navbar */}
       <nav className="top-navbar">
-        <div className="brand">
+        <a
+          href="/"
+          className="brand brand-clickable"
+          onClick={(e) => {
+            if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+              e.preventDefault();
+              onSwitchToChat?.();
+            }
+          }}
+          title="Return to Customer Portal (Home /)"
+        >
           <div className="brand-icon">TB</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="brand-title">TruthBranch Governance</div>
@@ -425,6 +435,35 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
             </div>
           </div>
           <span className="brand-tag">Admin</span>
+        </a>
+
+        {/* Route Navigation Segmented Control */}
+        <div className="route-nav-group">
+          <a
+            href="/"
+            className="route-nav-tab"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                onSwitchToChat?.();
+              }
+            }}
+            title="Navigate to Customer Portal (/)"
+          >
+            <span className="route-nav-icon">💬</span>
+            <span className="route-nav-text">Customer Portal</span>
+            <span className="route-nav-badge">/</span>
+          </a>
+          <a
+            href="/admin"
+            className="route-nav-tab active"
+            onClick={(e) => e.preventDefault()}
+            title="Current Page: Admin Console (/admin)"
+          >
+            <span className="route-nav-icon">🛡️</span>
+            <span className="route-nav-text">Admin Console</span>
+            <span className="route-nav-badge">/admin</span>
+          </a>
         </div>
 
         {/* Company Dataset Switcher */}
@@ -477,9 +516,23 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
             </div>
           )}
 
-          <button className="btn btn-secondary" onClick={onSwitchToChat} title="Switch to Public Customer Assistant">
-            &larr; Customer Portal
-          </button>
+          <a
+            href="/"
+            className="btn-nav-portal"
+            onClick={(e) => {
+              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                onSwitchToChat?.();
+              }
+            }}
+            title="Navigate back to Public Customer Assistant (/)"
+          >
+            <span>&larr; Customer Portal</span>
+            <span className="route-nav-badge">/</span>
+          </a>
+
+          <div className="nav-divider" />
+
           <button className="btn btn-secondary" onClick={handleQuickScenarioA} title="Quick Preset: Scenario A">
             {activeDataset === 'cloudgrid' 
               ? '+ Scenario A ($4.25)' 

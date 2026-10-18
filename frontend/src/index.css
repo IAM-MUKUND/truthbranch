@@ -92,6 +92,17 @@ body {
   flex-shrink: 0;
 }
 
+.brand-clickable {
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.brand-clickable:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
 .brand-icon {
   width: 32px;
   height: 32px;
@@ -129,6 +140,106 @@ body {
   border: 1px solid rgba(99, 102, 241, 0.25);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* Route Navigation Segmented Control */
+.route-nav-group {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(51, 65, 85, 0.8);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.route-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: none;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.route-nav-tab:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.route-nav-tab.active {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.route-nav-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.route-nav-text {
+  white-space: nowrap;
+}
+
+.route-nav-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-weight: 500;
+}
+
+.route-nav-tab.active .route-nav-badge {
+  background: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(51, 65, 85, 0.8);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.btn-nav-portal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e0e7ff;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-nav-portal:hover {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(30, 41, 59, 0.95));
+  border-color: rgba(99, 102, 241, 0.8);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
 }
 
 .navbar-actions {
