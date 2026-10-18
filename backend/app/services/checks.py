@@ -230,7 +230,8 @@ def analyze_change_request(cr_id: str) -> dict[str, Any]:
 
     client = get_falkordb()
     branch = client.select_graph(cr.branch_graph)
-    main = client.select_graph("kb_main")
+    from backend.app.db import get_graph
+    main = get_graph("kb_main")
 
     # 1. Determine base fact ID on kb_main (or old fact being updated)
     old_fact_id = None
@@ -242,9 +243,10 @@ def analyze_change_request(cr_id: str) -> dict[str, Any]:
     if not old_fact_id:
         old_fact_id = fact_id(cr.fact_key, 1)
 
-    # Dynamically retrieve old fact value from kb_main
-    val_res = main.ro_query("MATCH (f:Fact {id:$id}) RETURN f.value", params={"id": old_fact_id}).result_set
+    # Dynamically retrieve old fact value and unit from kb_main
+    val_res = main.ro_query("MATCH (f:Fact {id:$id}) RETURN f.value, f.unit", params={"id": old_fact_id}).result_set
     old_fact_val = val_res[0][0] if (val_res and val_res[0] and val_res[0][0] is not None) else 49
+    old_fact_unit = val_res[0][1] if (val_res and val_res[0] and len(val_res[0]) > 1 and val_res[0][1]) else "USD"
     if isinstance(old_fact_val, str) and old_fact_val.isdigit():
         old_fact_val = int(old_fact_val)
 
@@ -255,7 +257,7 @@ def analyze_change_request(cr_id: str) -> dict[str, Any]:
     # 3. Compute baseline comparison
     all_docs_res = main.ro_query("MATCH (d:Document) RETURN d.id, d.title, d.content").result_set
     documents_list = [{"id": r[0], "title": r[1], "content": r[2]} for r in all_docs_res]
-    baseline_card = compute_baseline_comparison(documents_list, impact_doc_ids, value=old_fact_val)
+    baseline_card = compute_baseline_comparison(documents_list, impact_doc_ids, value=old_fact_val, unit=old_fact_unit)
 
     # 4. Run quality checks on the branch
     check_results = run_quality_checks(

@@ -5,7 +5,7 @@ Supports multi-tenant company knowledge switching.
 from __future__ import annotations
 
 from typing import Any, Callable
-from backend.app.seed.datasets import lumen, cloudgrid
+from backend.app.seed.datasets import lumen, cloudgrid, meridian
 
 CATALOG: dict[str, dict[str, Any]] = {
     "lumen": {
@@ -25,6 +25,15 @@ CATALOG: dict[str, dict[str, Any]] = {
         "builder": cloudgrid.build_dataset,
         "scenarios": cloudgrid.SCENARIOS,
         "default_graph": "kb_dataset_cloudgrid",
+    },
+    "meridian": {
+        "id": "meridian",
+        "name": "Meridian Systems",
+        "domain": "Enterprise Workflow SaaS Platform",
+        "description": "Mid-market B2B workflow platform (~100 facts, ~400 documents, 31 stakeholders, 12 systems, 6 clients).",
+        "builder": meridian.build_dataset,
+        "scenarios": meridian.SCENARIOS,
+        "default_graph": "kb_dataset_meridian",
     },
 }
 

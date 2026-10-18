@@ -162,6 +162,33 @@ export default function ChatPortal({ onSwitchToAdmin, backendConnected }: ChatPo
                     💡 Who can I contact for support?
                   </button>
                 </>
+              ) : activeDataset === 'meridian' ? (
+                <>
+                  <button
+                    className="starter-btn"
+                    onClick={() => handleSend('What is your refund policy?')}
+                  >
+                    💡 What is your refund policy?
+                  </button>
+                  <button
+                    className="starter-btn"
+                    onClick={() => handleSend('How much does the Business plan cost?')}
+                  >
+                    💡 How much does the Business plan cost?
+                  </button>
+                  <button
+                    className="starter-btn"
+                    onClick={() => handleSend('What is the PTO vacation days policy?')}
+                  >
+                    💡 What is the HR PTO policy?
+                  </button>
+                  <button
+                    className="starter-btn"
+                    onClick={() => handleSend('What is your SLA uptime guarantee?')}
+                  >
+                    💡 What is your SLA uptime guarantee?
+                  </button>
+                </>
               ) : (
                 <>
                   <button
@@ -199,7 +226,7 @@ export default function ChatPortal({ onSwitchToAdmin, backendConnected }: ChatPo
               <div className="message-bubble">
                 <div className="message-header">
                   <span className="message-author">
-                    {m.role === 'user' ? 'You' : 'Lumen Ambassador'}
+                    {m.role === 'user' ? 'You' : `${companyName} Ambassador`}
                   </span>
                   <span className="message-time">{m.timestamp}</span>
                 </div>

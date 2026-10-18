@@ -14,6 +14,7 @@ export interface Operation {
   op_type: string;
   key?: string;
   new_value?: any;
+  unit?: string;
   expected_version?: number;
   old_fact_id?: string;
   new_fact_id?: string;
@@ -56,13 +57,27 @@ export interface ImpactItem {
   system_name?: string;
 }
 
+export interface BaselineSearchGroup {
+  query?: string;
+  pattern?: string;
+  found_count: number;
+  doc_ids: string[];
+  false_positives?: string[];
+  missed_multi_hop?: string[];
+  dark_dependencies?: string[];
+}
+
 export interface BaselineComparison {
-  naive_count: number;
-  graph_count: number;
-  missed_by_naive: string[];
-  false_positives: string[];
-  correctly_flagged: string[];
-  dark_dependencies: string[];
+  naive_search?: BaselineSearchGroup;
+  exact_regex?: BaselineSearchGroup;
+  graph_traversal?: BaselineSearchGroup;
+  summary?: string;
+  naive_count?: number;
+  graph_count?: number;
+  missed_by_naive?: string[];
+  false_positives?: string[];
+  correctly_flagged?: string[];
+  dark_dependencies?: string[];
 }
 
 export interface CheckResult {

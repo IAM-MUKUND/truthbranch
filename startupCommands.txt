@@ -1,0 +1,36 @@
+##falkor db
+
+# Check if container is already running
+docker ps | grep truthbranch-falkordb
+
+# If not running, start the existing container:
+docker start truthbranch-falkordb
+
+# OR if running for the very first time on a new machine:
+docker run -d --name truthbranch-falkordb -p 6380:6379 -p 3000:3000 falkordb/falkordb:latest
+
+
+
+
+
+##Backend (fastAPI)
+# 1. Activate the Python virtual environment
+source .venv/bin/activate
+
+# 2. (Optional) Seed the database if fresh or reset
+python -m backend.app.seed.seed --dataset lumen
+
+# 3. Start the FastAPI development server
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+
+
+
+
+
+
+##Frontend (react + typescript + vite)
+# 1. Navigate to the frontend directory
+cd frontend
+
+# 2. Start the Vite dev server
+npm run dev

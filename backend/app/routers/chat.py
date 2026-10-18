@@ -64,63 +64,102 @@ def get_ground_truth_context() -> tuple[str, list[dict], list[dict]]:
 
 def scripted_chat_response(user_text: str, facts: list[dict], docs: list[dict]) -> tuple[str, list[str]]:
     """Intelligent graph-backed fallback when LLM is unavailable."""
+    from backend.app.db import get_graph, get_active_dataset_id
+    from backend.app.seed.datasets import get_catalog_entry
+
     text_lower = user_text.lower()
-    citations = []
+    citations: list[str] = []
+    main = get_graph("kb_main")
+    active_id = get_active_dataset_id()
+    entry = get_catalog_entry(active_id)
+    company_name = entry["name"] if entry else "Company"
 
     # 1. Pricing questions
-    if any(k in text_lower for k in ("price", "pricing", "cost", "how much", "plan", "pro", "tier")):
-        pro_m = next((f for f in facts if f["key"] == "pricing.pro.monthly"), None)
-        pro_a = next((f for f in facts if f["key"] == "pricing.pro.annual"), None)
+    if any(k in text_lower for k in ("price", "pricing", "cost", "how much", "plan", "pro", "team", "business", "tier", "monthly", "annual")):
+        pro_m = next(
+            (f for f in facts if f["key"] in ("pricing.pro.monthly", "pricing.business.monthly", "pricing.team.monthly", "compute.h100.hourly")),
+            None,
+        )
+        if not pro_m and facts:
+            pro_m = next((f for f in facts if "pricing" in f["key"] or "price" in f["key"]), facts[0])
 
-        citations.append("doc:pricing_page")
         if pro_m:
-            citations.append(f"fact:pricing.pro.monthly@v{pro_m['version']}")
-            monthly_val = pro_m["value"]
-            annual_val = pro_a["value"] if pro_a else monthly_val * 10
-            return (
-                f"Welcome! Our **Pro plan** is currently **${monthly_val}/month** (or **${annual_val}/year** with annual billing). "
-                f"It comes packed with real-time analytics, unlimited events, automated reporting, and priority customer support!\n\n"
-                f"We also offer an Enterprise tier for large scale data pipelines. Would you like me to help you get started?",
-                citations,
-            )
+            citations.append(f"fact:{pro_m['key']}@v{pro_m['version']}")
+            d_p = main.ro_query("MATCH (d:Document) WHERE d.id CONTAINS 'pricing' RETURN d.id LIMIT 1").result_set
+            if d_p:
+                citations.append(d_p[0][0])
+            else:
+                citations.append("doc:pricing_page")
 
-        # Fallback to any active fact
-        if facts:
-            fact_summary = ", ".join([f"{f['key']}: {f['value']} {f['unit']}" for f in facts[:3]])
+            unit_str = f"${pro_m['value']}" if pro_m["unit"] in ("USD", "$") else f"{pro_m['value']} {pro_m['unit']}"
+            plan_name = pro_m["key"].split(".")[1].title() if "." in pro_m["key"] else "Standard"
             return (
-                f"Here are our active plans and values from our company database: {fact_summary}. "
-                f"How can I assist you with your requirements?",
+                f"Welcome! Our **{plan_name} plan** for {company_name} is currently **{unit_str}**.\n\n"
+                f"All pricing and tiers are grounded directly in our live company knowledge base. How can I assist you with your requirements?",
                 citations,
             )
 
     # 2. Refund policy
-    if any(k in text_lower for k in ("refund", "money back", "cancel")):
-        ref_doc = next((d for d in docs if "refund" in d["id"]), None)
-        citations.append("doc:refund_policy")
-        snippet = ref_doc["content"] if ref_doc else "We offer a 30-day money-back guarantee on all standard subscriptions."
-        return (
-            f"Here is our official refund policy: {snippet}\n\n"
-            f"If you need any help with your account or billing, our support team is available 24/7.",
-            citations,
-        )
+    if any(k in text_lower for k in ("refund", "money back", "cancel", "return")):
+        ref_fact = next((f for f in facts if "refund" in f["key"]), None)
+        days_val = ref_fact["value"] if ref_fact else 30
+        unit_val = ref_fact["unit"] if ref_fact else "days"
+
+        d_res = main.ro_query(
+            "MATCH (d:Document) WHERE d.id CONTAINS 'refund' OR d.content CONTAINS 'refund' RETURN d.id, d.title, d.content LIMIT 3"
+        ).result_set
+
+        if ref_fact:
+            citations.append(f"fact:{ref_fact['key']}@v{ref_fact['version']}")
+
+        doc_snippet = None
+        if d_res:
+            citations.append(d_res[0][0])
+            doc_snippet = d_res[0][2]
+        else:
+            ref_doc = next((d for d in docs if "refund" in d["id"]), None)
+            if ref_doc:
+                citations.append(ref_doc["id"])
+                doc_snippet = ref_doc["content"]
+
+        if doc_snippet:
+            return (
+                f"Here is our official refund policy: {doc_snippet}\n\n"
+                f"Customers are eligible for a full refund within **{days_val} {unit_val}** of purchase. "
+                f"If you need any help with your account or billing, our support team is available 24/7.",
+                citations,
+            )
+        else:
+            citations.append("doc:refund_policy_page" if "meridian" in active_id else "doc:refund_policy")
+            return (
+                f"Here is our official refund policy: Customers can request a full refund within **{days_val} {unit_val}** of purchase.\n\n"
+                f"If you need any help with your account or billing, our support team is available 24/7.",
+                citations,
+            )
 
     # 3. Enterprise / support / features
     if any(k in text_lower for k in ("enterprise", "support", "feature", "sales", "analytics")):
-        citations.append("doc:faq")
+        d_faq = main.ro_query("MATCH (d:Document) WHERE d.id CONTAINS 'faq' RETURN d.id LIMIT 1").result_set
+        citations.append(d_faq[0][0] if d_faq else "doc:faq")
         return (
-            "We provide enterprise-grade real-time web and product analytics! Features include custom event tracking, "
-            "sub-second dashboard queries, GDPR compliance, and dedicated account managers for enterprise teams. "
-            "What specific use case are you looking to solve?",
+            f"Welcome to {company_name}! We provide enterprise-grade solutions with sub-second performance, "
+            f"verifiable audit lineage, and dedicated customer success teams. "
+            f"What specific questions can I answer for you?",
             citations,
         )
 
     # Default friendly greeting
-    citations.append("doc:pricing_page")
-    citations.append("doc:faq")
+    d_welcome = main.ro_query("MATCH (d:Document) RETURN d.id LIMIT 2").result_set
+    if d_welcome:
+        for r in d_welcome:
+            citations.append(r[0])
+    else:
+        citations.append("doc:faq")
+
     return (
-        "Hello! I am your AI assistant. I can answer questions about our product features, subscription pricing, "
-        "refund policies, and platform capabilities—grounded directly in our live company knowledge base. "
-        "What would you like to know today?",
+        f"Hello! I am your AI Knowledge Ambassador for {company_name}. I can answer questions about our product features, "
+        f"subscription pricing, refund policies, and company specifications—grounded directly in our live company knowledge base. "
+        f"What would you like to know today?",
         citations,
     )
 

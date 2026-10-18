@@ -64,9 +64,7 @@ class SubmitForApprovalArgs(BaseModel):
 
 def get_lineage(fact_id: str) -> dict[str, Any]:
     """Inspect the lineage, version history, source provenance, and upstream facts."""
-    client = get_falkordb()
-    # Check both kb_main and any active branch containing this fact
-    main = client.select_graph("kb_main")
+    main = get_graph("kb_main")
 
     # 1. Version history (supersedes chain)
     versions_res = main.ro_query(
@@ -138,8 +136,7 @@ def get_impact(cr_id: str) -> dict[str, Any]:
     if not cr:
         return {"error": f"Change Request '{cr_id}' not found."}
 
-    client = get_falkordb()
-    main = client.select_graph("kb_main")
+    main = get_graph("kb_main")
 
     old_fact_id = None
     for op in cr.ops:

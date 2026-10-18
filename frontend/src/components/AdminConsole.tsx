@@ -24,6 +24,36 @@ import type {
   CatalogEntry,
 } from '../types';
 
+export function formatValueWithUnit(val: any, unit?: string): string {
+  if (val === undefined || val === null || val === '') return '-';
+  if (!unit || unit === 'USD') {
+    return `$${val}`;
+  }
+  if (unit === 'kUSD') return `$${val}k`;
+  if (unit === 'MUSD') return `$${val}M`;
+  if (unit === 'percent') return `${val}%`;
+  if (unit === 'chars') return `${val} characters`;
+  if (unit === 'per_min') return `${val}/min`;
+
+  const singularUnits: Record<string, string> = {
+    days: 'day',
+    hours: 'hour',
+    minutes: 'minute',
+    weeks: 'week',
+    months: 'month',
+    years: 'year',
+    seats: 'seat',
+    codes: 'code',
+    people: 'person',
+  };
+
+  const num = Number(val);
+  if (!isNaN(num) && num === 1 && singularUnits[unit]) {
+    return `1 ${singularUnits[unit]}`;
+  }
+  return `${val} ${unit}`;
+}
+
 interface AdminConsoleProps {
   onSwitchToChat: () => void;
 }
@@ -46,15 +76,15 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
   const [entities, setEntities] = useState<EntityData>({ people: [], facts: [], sources: [], documents: [] });
 
   // Custom Change Form State
-  const [selectedFactKey, setSelectedFactKey] = useState<string>('pricing.pro.monthly');
+  const [selectedFactKey, setSelectedFactKey] = useState<string>('');
   const [customFactKey, setCustomFactKey] = useState<string>('');
-  const [currentFactVal, setCurrentFactVal] = useState<string>('$49 USD');
-  const [newVal, setNewVal] = useState<string>('59');
-  const [selectedPersonId, setSelectedPersonId] = useState<string>('p:maya');
+  const [currentFactVal, setCurrentFactVal] = useState<string>('-');
+  const [newVal, setNewVal] = useState<string>('');
+  const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [customAuthor, setCustomAuthor] = useState<string>('');
-  const [selectedSourceId, setSelectedSourceId] = useState<string>('src:pricing_committee_memo_2026_10');
+  const [selectedSourceId, setSelectedSourceId] = useState<string>('');
   const [customSourceId, setCustomSourceId] = useState<string>('');
-  const [newTitle, setNewTitle] = useState<string>('Pro Monthly Price Increase');
+  const [newTitle, setNewTitle] = useState<string>('');
 
   useEffect(() => {
     loadInitialData();
@@ -116,7 +146,8 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
       if (data.facts.length > 0) {
         const first = data.facts[0];
         setSelectedFactKey(first.key);
-        setCurrentFactVal(`$${first.value} ${first.unit}`);
+        setCurrentFactVal(formatValueWithUnit(first.value, first.unit));
+        setNewTitle(`Update ${first.key}`);
       }
       if (data.people.length > 0) {
         setSelectedPersonId(data.people[0].id);
@@ -146,10 +177,12 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
     if (key !== '__custom__') {
       const matched = entities.facts.find((f) => f.key === key);
       if (matched) {
-        setCurrentFactVal(`$${matched.value} ${matched.unit}`);
+        setCurrentFactVal(formatValueWithUnit(matched.value, matched.unit));
+        setNewTitle(`Update ${matched.key}`);
       }
     } else {
       setCurrentFactVal('N/A (New Fact)');
+      setNewTitle('Custom Fact Update');
     }
   }
 
@@ -209,6 +242,7 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
     try {
       setLoading(true);
       const isCloud = activeDataset === 'cloudgrid';
+      const isMeridian = activeDataset === 'meridian';
       const cr = await createChangeRequest(
         isCloud
           ? {
@@ -217,6 +251,14 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
               new_value: 4.25,
               source_id: 'src:infra_board_resolution_2026',
               created_by: 'Dave Ross',
+            }
+          : isMeridian
+          ? {
+              title: 'Update Support Refund Window to 25 Days',
+              fact_key: 'support.refund.days',
+              new_value: 25,
+              source_id: 'src:pricing_committee_memo_2026_10',
+              created_by: 'Lucy Evans',
             }
           : {
               title: 'Q4 Enterprise Price Adjustment',
@@ -240,6 +282,7 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
     try {
       setLoading(true);
       const isCloud = activeDataset === 'cloudgrid';
+      const isMeridian = activeDataset === 'meridian';
       const cr = await createChangeRequest(
         isCloud
           ? {
@@ -247,6 +290,14 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
               fact_key: 'compute.h100.hourly',
               new_value: 4.25,
               source_id: 'src:discord_rumor_2026',
+              created_by: 'Anonymous',
+            }
+          : isMeridian
+          ? {
+              title: 'Unverified Refund Policy Rumor (15 Days)',
+              fact_key: 'support.refund.days',
+              new_value: 15,
+              source_id: 'src:slack_rumor_2026_10',
               created_by: 'Anonymous',
             }
           : {
@@ -347,22 +398,38 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
 
   const cr = detail?.cr;
 
+  // Generic dynamic facts & values for currently selected CR
+  const primaryDiff = detail?.diff?.facts?.find((f: any) => f.key === cr?.fact_key);
+  const entityFact = entities.facts.find((f: any) => f.key === cr?.fact_key);
+  const opFact = cr?.ops?.find((op: any) => op.key === cr?.fact_key);
+
+  const factUnit = primaryDiff?.unit || opFact?.unit || entityFact?.unit || '';
+  const oldValue = primaryDiff?.old_value !== undefined 
+    ? primaryDiff.old_value 
+    : (entityFact?.value !== undefined ? entityFact.value : '-');
+  const newValue = cr?.new_value;
+
+  const derivedDiffFacts = (detail?.diff?.facts || []).filter((f: any) => f.key !== cr?.fact_key);
+  const derivedOps = (cr?.ops || []).filter((op: any) => op.derived);
+
   return (
     <div className="app-container">
       {/* Top Navbar */}
       <nav className="top-navbar">
         <div className="brand">
           <div className="brand-icon">TB</div>
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="brand-title">TruthBranch Governance</div>
-            <div style={{ fontSize: '11px', color: '#64748b' }}>Operations Console & Branch Manager</div>
+            <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', lineHeight: '1.2' }}>
+              Operations Console & Branch Manager
+            </div>
           </div>
           <span className="brand-tag">Admin</span>
         </div>
 
         {/* Company Dataset Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(30, 41, 59, 0.8)', padding: '5px 12px', borderRadius: '8px', border: '1px solid #334155' }}>
-          <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(30, 41, 59, 0.8)', padding: '4px 10px', borderRadius: '8px', border: '1px solid #334155', flexShrink: 0 }}>
+          <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, whiteSpace: 'nowrap' }}>
             Active Brain:
           </span>
           <select
@@ -374,21 +441,22 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
               color: '#38bdf8',
               border: '1px solid #475569',
               borderRadius: '6px',
-              padding: '4px 10px',
+              padding: '4px 8px',
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
               outline: 'none',
+              maxWidth: '185px',
             }}
           >
             {catalog.map((entry) => (
               <option key={entry.id} value={entry.id}>
-                {entry.name} {entry.is_seeded ? '⚡' : ''} ({entry.domain})
+                {entry.name} {entry.is_seeded ? '⚡' : ''}
               </option>
             ))}
           </select>
           {switchFeedback && (
-            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
+            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap' }}>
               {switchFeedback}
             </span>
           )}
@@ -396,32 +464,40 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
 
         <div className="navbar-actions">
           {loading && (
-            <span style={{ fontSize: '11px', color: '#818cf8', fontWeight: 600 }}>Syncing...</span>
+            <span style={{ fontSize: '11px', color: '#818cf8', fontWeight: 600, whiteSpace: 'nowrap' }}>Syncing...</span>
           )}
           {health && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px' }}>
-              <span className="status-pill status-CHECKS_PASSED" style={{ fontSize: '10px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+              <span className="status-pill status-CHECKS_PASSED" style={{ fontSize: '10px', padding: '2px 8px' }}>
                 FalkorDB: {health.falkordb}
               </span>
-              <span className="status-pill status-DRAFT" style={{ fontSize: '10px' }}>
-                Agent: {health.agent_mode} (gpt-oss-120b)
+              <span className="status-pill status-DRAFT" style={{ fontSize: '10px', padding: '2px 8px' }}>
+                Agent: {health.agent_mode}
               </span>
             </div>
           )}
 
-          <button className="btn btn-secondary" onClick={onSwitchToChat}>
-            &larr; Public AI Assistant
+          <button className="btn btn-secondary" onClick={onSwitchToChat} title="Switch to Public Customer Assistant">
+            &larr; Customer Portal
           </button>
-          <button className="btn btn-secondary" onClick={handleQuickScenarioA}>
-            {activeDataset === 'cloudgrid' ? '+ Scenario A ($3.85 \u2192 $4.25)' : '+ Scenario A ($49 \u2192 $59)'}
+          <button className="btn btn-secondary" onClick={handleQuickScenarioA} title="Quick Preset: Scenario A">
+            {activeDataset === 'cloudgrid' 
+              ? '+ Scenario A ($4.25)' 
+              : activeDataset === 'meridian' 
+              ? '+ Scenario A (25 Days)' 
+              : '+ Scenario A ($59)'}
           </button>
-          <button className="btn btn-secondary" onClick={handleQuickScenarioB}>
-            {activeDataset === 'cloudgrid' ? '+ Scenario B (Discord Leak)' : '+ Scenario B (Slack Rumor)'}
+          <button className="btn btn-secondary" onClick={handleQuickScenarioB} title="Quick Preset: Scenario B">
+            {activeDataset === 'cloudgrid' 
+              ? '+ Scenario B (Discord)' 
+              : activeDataset === 'meridian' 
+              ? '+ Scenario B (Slack Leak)' 
+              : '+ Scenario B (Slack)'}
           </button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             + Custom Change
           </button>
-          <button className="btn btn-danger" onClick={() => handleResetDemo(false)}>
+          <button className="btn btn-danger" onClick={() => handleResetDemo(false)} title="Reset Database to Clean State">
             Reset Demo
           </button>
         </div>
@@ -542,12 +618,16 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                     <div className="value-comparison">
                       <div className="val-box">
                         <span className="val-label">Current Value</span>
-                        <span className="val-number val-old">$49</span>
+                        <span className="val-number val-old">
+                          {formatValueWithUnit(oldValue, factUnit)}
+                        </span>
                       </div>
                       <div className="val-arrow">&rarr;</div>
                       <div className="val-box">
                         <span className="val-label">Proposed Value</span>
-                        <span className="val-number val-new">${cr.new_value}</span>
+                        <span className="val-number val-new">
+                          {formatValueWithUnit(newValue, factUnit)}
+                        </span>
                       </div>
                     </div>
 
@@ -556,9 +636,27 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                         <span style={{ color: '#94a3b8' }}>Attached Source:</span>
                         <span style={{ fontFamily: 'var(--font-mono)' }}>{cr.source_id || 'None attached'}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#94a3b8' }}>Derived Fact Link:</span>
-                        <span style={{ color: '#86efac' }}>pricing.pro.annual &rarr; ${Number(cr.new_value) * 10}</span>
+                        {derivedDiffFacts.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                            {derivedDiffFacts.map((df: any) => (
+                              <span key={df.key} style={{ color: '#86efac', fontFamily: 'var(--font-mono)' }}>
+                                {df.key} &rarr; {formatValueWithUnit(df.new_value, df.unit || factUnit)}
+                              </span>
+                            ))}
+                          </div>
+                        ) : derivedOps.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                            {derivedOps.map((op: any) => (
+                              <span key={op.key || op.op_id} style={{ color: '#86efac', fontFamily: 'var(--font-mono)' }}>
+                                {op.key} &rarr; {formatValueWithUnit(op.new_value, op.unit || factUnit)}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ color: '#64748b', fontStyle: 'italic' }}>None (Direct change only)</span>
+                        )}
                       </div>
                       {cr.rejected_reason && (
                         <div style={{ color: '#fda4af', marginTop: '6px' }}>
@@ -576,35 +674,55 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                     <span className="status-pill status-CHECKS_PASSED">Benchmark Proof</span>
                   </div>
                   <div className="card-body">
-                    <div className="metrics-row">
-                      <div className="metric-card">
-                        <div className="metric-title">Naive Keyword Search</div>
-                        <div className="metric-val" style={{ color: '#f87171' }}>
-                          {detail?.baseline.naive_count || 5} Docs
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                          Missed 2 multi-hop documents with no literal price words!
-                        </div>
-                      </div>
-                      <div className="metric-card">
-                        <div className="metric-title">TruthBranch Graph</div>
-                        <div className="metric-val" style={{ color: '#34d399' }}>
-                          {detail?.baseline.graph_count || 7} Docs
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                          100% full transitive impact with verifiable provenance paths.
-                        </div>
-                      </div>
-                    </div>
+                    {(() => {
+                      const naiveCount = detail?.baseline?.naive_search?.found_count ?? detail?.baseline?.naive_count ?? 0;
+                      const graphCount = detail?.baseline?.graph_traversal?.found_count ?? detail?.baseline?.graph_count ?? (detail?.impact?.length || 0);
+                      const missedDocs = detail?.baseline?.exact_regex?.missed_multi_hop ?? detail?.baseline?.missed_by_naive ?? [];
+                      const missedCount = missedDocs.length;
+                      const summary = detail?.baseline?.summary || '100% full transitive impact with verifiable provenance paths.';
 
-                    <div style={{ fontSize: '12px', color: '#cbd5e1' }}>
-                      <b>Missed by Naive Search:</b>
-                      <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
-                        {(detail?.baseline.missed_by_naive || ['doc:investor_update', 'doc:board_deck']).map((d) => (
-                          <span key={d} className="path-node" style={{ color: '#fca5a5' }}>{d}</span>
-                        ))}
-                      </div>
-                    </div>
+                      return (
+                        <>
+                          <div className="metrics-row">
+                            <div className="metric-card">
+                              <div className="metric-title">Naive Keyword Search</div>
+                              <div className="metric-val" style={{ color: '#f87171' }}>
+                                {naiveCount} Docs
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                                {missedCount > 0
+                                  ? `Missed ${missedCount} multi-hop document${missedCount === 1 ? '' : 's'} with no literal match!`
+                                  : 'Matched all direct mentions in indexed documents.'}
+                              </div>
+                            </div>
+                            <div className="metric-card">
+                              <div className="metric-title">TruthBranch Graph</div>
+                              <div className="metric-val" style={{ color: '#34d399' }}>
+                                {graphCount} Docs
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                                {summary}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ fontSize: '12px', color: '#cbd5e1' }}>
+                            <b>Missed by Naive Search:</b>
+                            {missedDocs.length > 0 ? (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                                {missedDocs.map((d) => (
+                                  <span key={d} className="path-node" style={{ color: '#fca5a5' }}>{d}</span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', fontStyle: 'italic' }}>
+                                None (Direct keyword search found all affected documents)
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -664,7 +782,9 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                 <div className="card">
                   <div className="card-header">
                     <div className="card-title">Deterministic Quality Checks</div>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>5 Standard Rules</span>
+                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                      {detail?.checks.length || 0} Rules Evaluated
+                    </span>
                   </div>
                   <div className="card-body">
                     <div className="checks-list">
@@ -806,7 +926,7 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                 >
                   {entities.facts.map((f: FactEntity) => (
                     <option key={f.id} value={f.key}>
-                      {f.key} (Current: ${f.value} {f.unit})
+                      {f.key} (Current: {formatValueWithUnit(f.value, f.unit)})
                     </option>
                   ))}
                   <option value="__custom__">+ Enter Custom Fact Key...</option>
@@ -831,7 +951,7 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                   className="form-input"
                   value={newVal}
                   onChange={(e) => setNewVal(e.target.value)}
-                  placeholder="e.g. 59"
+                  placeholder="e.g. 25"
                   required
                 />
               </div>

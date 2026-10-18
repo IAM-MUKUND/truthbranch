@@ -73,10 +73,14 @@ def get_cr_detail(cr_id: str):
     client = get_falkordb()
     main = get_graph("kb_main")
     
-    # 1. Old fact id
-    old_fact_id = fact_id(cr.fact_key, 1)
-    f_res = main.ro_query("MATCH (f:Fact {id: $id}) RETURN f.value", params={"id": old_fact_id}).result_set
+    # 1. Old fact info
+    old_fact_id = fact_id(cr.fact_key, cr.base_revision or 1)
+    f_res = main.ro_query(
+        "MATCH (f:Fact) WHERE f.key = $key RETURN f.value, f.unit ORDER BY f.version DESC LIMIT 1",
+        params={"key": cr.fact_key},
+    ).result_set
     fact_val = f_res[0][0] if f_res else 49
+    fact_unit = f_res[0][1] if (f_res and len(f_res[0]) > 1 and f_res[0][1]) else "USD"
 
     # 2. Impact set
     impact_items = impact_for_fact(main, old_fact_id)
@@ -94,7 +98,7 @@ def get_cr_detail(cr_id: str):
     # 4. Baseline
     all_docs = main.ro_query("MATCH (d:Document) RETURN d.id, d.title, d.content").result_set
     documents_list = [{"id": r[0], "title": r[1], "content": r[2]} for r in all_docs]
-    baseline = compute_baseline_comparison(documents_list, impact_doc_ids, value=fact_val)
+    baseline = compute_baseline_comparison(documents_list, impact_doc_ids, value=fact_val, unit=fact_unit)
 
     # 5. Audit & Steps
     audit_events = get_audit_events(cr_id)
@@ -128,13 +132,20 @@ def get_cr_baseline(cr_id: str):
         raise HTTPException(status_code=404, detail=f"Change Request '{cr_id}' not found.")
 
     main = get_graph("kb_main")
-    old_fact_id = fact_id(cr.fact_key, 1)
+    old_fact_id = fact_id(cr.fact_key, cr.base_revision or 1)
     impact_items = impact_for_fact(main, old_fact_id)
     impact_doc_ids = [i["doc_id"] for i in impact_items]
 
+    f_res = main.ro_query(
+        "MATCH (f:Fact) WHERE f.key = $key RETURN f.value, f.unit ORDER BY f.version DESC LIMIT 1",
+        params={"key": cr.fact_key},
+    ).result_set
+    fact_val = f_res[0][0] if f_res else 49
+    fact_unit = f_res[0][1] if (f_res and len(f_res[0]) > 1 and f_res[0][1]) else "USD"
+
     all_docs = main.ro_query("MATCH (d:Document) RETURN d.id, d.title, d.content").result_set
     documents_list = [{"id": r[0], "title": r[1], "content": r[2]} for r in all_docs]
-    return compute_baseline_comparison(documents_list, impact_doc_ids, value=49)
+    return compute_baseline_comparison(documents_list, impact_doc_ids, value=fact_val, unit=fact_unit)
 
 
 @router.post("/{cr_id}/agent-review")

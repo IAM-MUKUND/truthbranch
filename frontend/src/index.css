@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+  color-scheme: dark;
   --bg-main: #090d16;
   --bg-card: rgba(17, 24, 39, 0.75);
   --bg-card-hover: rgba(24, 33, 53, 0.85);
@@ -72,13 +73,14 @@ body {
 /* Top Navigation Bar */
 .top-navbar {
   height: 64px;
-  background: rgba(13, 17, 23, 0.85);
+  background: rgba(13, 17, 23, 0.9);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 16px;
+  gap: 12px;
   flex-shrink: 0;
   z-index: 20;
 }
@@ -86,7 +88,8 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .brand-icon {
@@ -99,14 +102,17 @@ body {
   justify-content: center;
   font-weight: 700;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   box-shadow: 0 0 16px rgba(99, 102, 241, 0.35);
+  flex-shrink: 0;
 }
 
 .brand-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  line-height: 1.2;
   background: linear-gradient(to right, #fff, #94a3b8);
   -webkit-background-clip: text;
   background-clip: text;
@@ -114,19 +120,28 @@ body {
 }
 
 .brand-tag {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: 2px 7px;
   background: rgba(99, 102, 241, 0.15);
   color: #818cf8;
   border-radius: 9999px;
   border: 1px solid rgba(99, 102, 241, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.navbar-actions .btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 /* Main View Body */
@@ -759,19 +774,55 @@ body {
   color: var(--text-secondary);
 }
 
-.form-input, .form-select {
+.form-input {
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  color: white;
+  color: #f8fafc;
   font-family: inherit;
   font-size: 14px;
 }
 
-.form-input:focus, .form-select:focus {
+.form-input:focus {
   outline: none;
   border-color: var(--accent-primary);
+}
+
+.form-select,
+select {
+  padding: 10px 12px;
+  background-color: #0f172a !important;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: #f8fafc !important;
+  font-family: inherit;
+  font-size: 14px;
+  color-scheme: dark;
+}
+
+.form-select:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* Explicit high-contrast option styling for native dropdown popups */
+.form-select option,
+select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 8px 12px;
+}
+
+.form-select option:hover,
+.form-select option:focus,
+.form-select option:checked,
+select option:hover,
+select option:focus,
+select option:checked {
+  background-color: #1e293b !important;
+  color: #38bdf8 !important;
 }
 
 /* ==========================================================================

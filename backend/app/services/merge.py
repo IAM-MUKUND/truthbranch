@@ -221,6 +221,17 @@ def merge_change_request(cr_id: str) -> dict[str, Any]:
         "MATCH (e:ProposedEdit)-[:EDITS]->(d:Document) RETURN d.id, e.after"
     ).result_set
 
+    # Safeguard: if branch_edits is empty, automatically draft edits
+    if not branch_edits:
+        from backend.app.services.edits import propose_edits_for_cr
+        try:
+            propose_edits_for_cr(cr_id)
+            branch_edits = branch.ro_query(
+                "MATCH (e:ProposedEdit)-[:EDITS]->(d:Document) RETURN d.id, e.after"
+            ).result_set
+        except Exception:
+            pass
+
     # Build mapping of old_id -> new_id for all updated facts in this CR
     updated_fact_map: dict[str, str] = {}
     for op in cr.ops:
@@ -228,8 +239,9 @@ def merge_change_request(cr_id: str) -> dict[str, Any]:
             updated_fact_map[op.old_fact_id] = op.new_fact_id
 
     # Fallback default if ops lacked explicit old/new IDs
-    if fact_id(cr.fact_key, 1) not in updated_fact_map:
-        updated_fact_map[fact_id(cr.fact_key, 1)] = fact_id(cr.fact_key, 2)
+    primary_old = fact_id(cr.fact_key, cr.base_revision or 1)
+    if primary_old not in updated_fact_map:
+        updated_fact_map[primary_old] = fact_id(cr.fact_key, (cr.base_revision or 1) + 1)
     if "pricing.pro.annual" not in [op.key for op in cr.ops] and cr.fact_key == "pricing.pro.monthly":
         updated_fact_map[fact_id("pricing.pro.annual", 1)] = fact_id("pricing.pro.annual", 2)
 
@@ -245,22 +257,21 @@ def merge_change_request(cr_id: str) -> dict[str, Any]:
             params={"doc_id": doc_id, "after": after_text, "now": now[:10]},
         )
 
-        # Repoint citations for any updated fact
-        for old_f_id, new_f_id in updated_fact_map.items():
-            main.query(
-                """
-                MATCH (d:Document {id:$doc_id})-[c:CITES]->(old:Fact {id:$old_id})
-                MATCH (new:Fact {id:$new_id})
-                DELETE c
-                WITH d, new
-                MERGE (d)-[:CITES]->(new)
-                """,
-                params={
-                    "doc_id": doc_id,
-                    "old_id": old_f_id,
-                    "new_id": new_f_id,
-                },
-            )
+    # Repoint citations on kb_main for all documents citing any updated fact in this CR
+    for old_f_id, new_f_id in updated_fact_map.items():
+        main.query(
+            """
+            MATCH (d:Document)-[c:CITES]->(old:Fact {id:$old_id})
+            MATCH (new:Fact {id:$new_id})
+            DELETE c
+            WITH d, new
+            MERGE (d)-[:CITES]->(new)
+            """,
+            params={
+                "old_id": old_f_id,
+                "new_id": new_f_id,
+            },
+        )
 
     # 6. Mark multi-hop derived documents without literals as NEEDS_REVIEW on kb_main
     branch_stale = branch.ro_query(

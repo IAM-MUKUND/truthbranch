@@ -79,8 +79,10 @@ def build_cr_operations(
 
     for row in derived_res.result_set:
         down_id, down_key, down_version, down_unit, rule = row
-        # Compute derived value (e.g. rule 'x10' -> multiply by 10)
-        if rule == "x10":
+        # Compute derived value (e.g. rule 'x10' -> multiply by 10, 'x2' -> multiply by 2)
+        if rule and rule.startswith("x") and rule[1:].isdigit():
+            derived_new_val = int(new_value) * int(rule[1:])
+        elif rule == "x10":
             derived_new_val = int(new_value) * 10
         else:
             derived_new_val = new_value
