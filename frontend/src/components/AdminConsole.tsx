@@ -430,7 +430,7 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
           <div className="brand-icon">TB</div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="brand-title">TruthBranch Governance</div>
-            <div style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', lineHeight: '1.2' }}>
+            <div className="brand-subtitle" style={{ fontSize: '11px', color: '#64748b', whiteSpace: 'nowrap', lineHeight: '1.2' }}>
               Operations Console & Branch Manager
             </div>
           </div>
@@ -467,8 +467,8 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
         </div>
 
         {/* Company Dataset Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(30, 41, 59, 0.8)', padding: '4px 10px', borderRadius: '8px', border: '1px solid #334155', flexShrink: 0 }}>
-          <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, whiteSpace: 'nowrap' }}>
+        <div className="active-brain-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(30, 41, 59, 0.8)', padding: '4px 8px', borderRadius: '8px', border: '1px solid #334155', flexShrink: 0 }}>
+          <span className="active-brain-label" style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700, whiteSpace: 'nowrap' }}>
             Active Brain:
           </span>
           <select
@@ -480,12 +480,12 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
               color: '#38bdf8',
               border: '1px solid #475569',
               borderRadius: '6px',
-              padding: '4px 8px',
+              padding: '3px 6px',
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
               outline: 'none',
-              maxWidth: '185px',
+              maxWidth: '165px',
             }}
           >
             {catalog.map((entry) => (
@@ -506,32 +506,10 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
             <span style={{ fontSize: '11px', color: '#818cf8', fontWeight: 600, whiteSpace: 'nowrap' }}>Syncing...</span>
           )}
           {health && (
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
-              <span className="status-pill status-CHECKS_PASSED" style={{ fontSize: '10px', padding: '2px 8px' }}>
-                FalkorDB: {health.falkordb}
-              </span>
-              <span className="status-pill status-DRAFT" style={{ fontSize: '10px', padding: '2px 8px' }}>
-                Agent: {health.agent_mode}
-              </span>
-            </div>
+            <span className="status-pill status-CHECKS_PASSED" style={{ fontSize: '10px', padding: '2px 7px', flexShrink: 0 }}>
+              FalkorDB: {health.falkordb}
+            </span>
           )}
-
-          <a
-            href="/"
-            className="btn-nav-portal"
-            onClick={(e) => {
-              if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
-                e.preventDefault();
-                onSwitchToChat?.();
-              }
-            }}
-            title="Navigate back to Public Customer Assistant (/)"
-          >
-            <span>&larr; Customer Portal</span>
-            <span className="route-nav-badge">/</span>
-          </a>
-
-          <div className="nav-divider" />
 
           <button className="btn btn-secondary" onClick={handleQuickScenarioA} title="Quick Preset: Scenario A">
             {activeDataset === 'cloudgrid' 
@@ -853,17 +831,41 @@ export default function AdminConsole({ onSwitchToChat }: AdminConsoleProps) {
                             <div>
                               <div className="check-name">{chk.code}</div>
                               <div className="check-msg">{chk.message}</div>
+                              {!chk.passed && chk.code === 'LITERAL_VALUE_LEAK' && chk.evidence && (
+                                <div style={{ fontSize: '11px', color: '#fbbf24', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontWeight: 600 }}>Unlinked Shadow Doc:</span>
+                                  {chk.evidence.map((docId: string) => (
+                                    <code key={docId} style={{ background: 'rgba(245, 158, 11, 0.18)', padding: '1px 6px', borderRadius: '4px', color: '#fde68a', fontFamily: 'var(--font-mono)' }}>
+                                      {docId} {docId === 'doc:partner_faq' ? '(Partner FAQ)' : ''}
+                                    </code>
+                                  ))}
+                                  <span style={{ color: '#94a3b8' }}>&bull; Advisory warning (does not block review or merge)</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <span
                             className="status-pill"
                             style={{
                               fontSize: '10px',
-                              background: chk.passed ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)',
-                              color: chk.passed ? '#34d399' : '#fb7185',
+                              background: chk.passed 
+                                ? 'rgba(16, 185, 129, 0.2)' 
+                                : chk.severity === 'WARN' 
+                                ? 'rgba(245, 158, 11, 0.2)' 
+                                : 'rgba(244, 63, 94, 0.2)',
+                              color: chk.passed 
+                                ? '#34d399' 
+                                : chk.severity === 'WARN' 
+                                ? '#fbbf24' 
+                                : '#fb7185',
+                              border: chk.passed 
+                                ? '1px solid rgba(16, 185, 129, 0.3)' 
+                                : chk.severity === 'WARN' 
+                                ? '1px solid rgba(245, 158, 11, 0.35)' 
+                                : '1px solid rgba(244, 63, 94, 0.3)',
                             }}
                           >
-                            {chk.passed ? 'PASS' : chk.severity}
+                            {chk.passed ? 'PASS' : chk.severity === 'WARN' ? 'WARN (ADVISORY)' : chk.severity}
                           </span>
                         </div>
                       ))}
