@@ -15,11 +15,6 @@ Built for **FalkorDB Graph Hacks 2026**:
 
 ---
 
-## 🎥 Live Working Demo (Submission Check #2)
-
-> **Demo Video Link:** [Watch the 3-Minute TruthBranch Demo on YouTube / Loom](https://github.com/IAM-MUKUND/truthbranch#) *(Add your recording URL here)*
-> 
-> *A full second-by-second recording guide and rehearsal script is documented in [`docs/demo-video-guide.md`](docs/demo-video-guide.md).*
 
 ### Quick Demonstration Summary (End-to-End in 3 Minutes):
 1. **Public Customer Assistant (`/`):** A customer asks *"How much does Pro cost?"* — bot responds **$49/month** with citation `[doc:faq]`.
